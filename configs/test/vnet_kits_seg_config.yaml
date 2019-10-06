@@ -1,0 +1,29 @@
+main:
+    random_seed: 'nips2019'
+    saved_dir: '/home/peter850706/nips2019/models/kits_seg/vnet/test'
+    loaded_path: '/home/peter850706/nips2019/models/kits_seg/vnet/train/checkpoints/model_best.pth'
+
+net:
+    name: 'VNet'
+    kwargs:
+        in_channels: 1
+        out_channels: 3
+
+metrics:
+    - name: 'Dice'
+    - name: 'FalseNegativeSize'
+
+predictor:
+    name: 'KitsSegPredictor'
+    kwargs:
+        data_dir: '/home/peter850706/kits19_preprocessed/data'
+        data_split_csv: '/home/peter850706/kits19_preprocessed/dataset_split.csv'
+        preprocessings:
+          - name: 'Normalize'
+        transforms:
+          - name: 'ToTensor'
+        sample_size: [192, 192, 48]
+        shift: [180, 180, 40]
+        device: 'cuda:0'
+        saved_dir: '/home/peter850706/nips2019/models/kits_seg/vnet/test'
+        exported: true

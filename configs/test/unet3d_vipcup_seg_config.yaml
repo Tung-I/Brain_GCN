@@ -1,0 +1,30 @@
+main:
+    random_seed: 'nips2019'
+    saved_dir: '/home/peter850706/nips2019/models/vipcup_seg/unet3d/test'
+    loaded_path: '/home/peter850706/nips2019/models/vipcup_seg/unet3d/train/checkpoints/model_best.pth'
+
+net:
+    name: 'UNet3D'
+    kwargs:
+        in_channels: 1
+        out_channels: 2
+        num_features: [32, 64, 128, 256, 512]
+
+metrics:
+    - name: 'Dice'
+    - name: 'FalseNegativeSize'
+
+predictor:
+    name: 'VIPCUPSegPredictor'
+    kwargs:
+        data_dir: '/home/peter850706/VIPCUPData2x2x3'
+        data_split_csv: '/home/peter850706/VIPCUPData2x2x3/dataset_split_GTV1.csv'
+        preprocessings:
+          - name: 'Normalize'
+        transforms:
+          - name: 'ToTensor'
+        sample_size: [192, 192, 48]
+        shift: [180, 180, 40]
+        device: 'cuda:0'
+        saved_dir: '/home/peter850706/nips2019/models/vipcup_seg/unet3d/test'
+        exported: true
