@@ -119,10 +119,10 @@ class BaseTrainer:
         count = 0
         for batch in trange:
             batch = self._allocate_data(batch)
-            inputs, targets = self._get_inputs_targets(batch)
+            inputs, adj_arr, targets, segments = self._get_inputs_targets(batch)
             if mode == 'training':
-                outputs = self.net(inputs)
-                losses = self._compute_losses(outputs, targets)
+                outputs = self.net(inputs, adj_arr)
+                losses = self._compute_losses(outputs, targets, segments)
                 loss = (torch.stack(losses) * self.loss_weights).sum()
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -132,7 +132,7 @@ class BaseTrainer:
                     outputs = self.net(inputs)
                     losses = self._compute_losses(outputs, targets)
                     loss = (torch.stack(losses) * self.loss_weights).sum()
-            metrics =  self._compute_metrics(outputs, targets)
+            metrics =  self._compute_metrics(outputs, targets, segments)
 
             batch_size = self.train_dataloader.batch_size if mode == 'training' else self.valid_dataloader.batch_size
             self._update_log(log, batch_size, loss, losses, metrics)

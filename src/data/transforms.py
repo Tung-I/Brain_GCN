@@ -5,7 +5,7 @@ import numpy as np
 import SimpleITK as sitk
 from skimage.transform import resize
 from skimage.morphology import label
-
+from skimage.segmentation import slic
 import src.data.transforms
 
 
@@ -28,6 +28,49 @@ def compose(transforms=None):
 
     transforms = Compose(_transforms)
     return transforms
+
+
+def max_min_normalize(img):
+    img = np.asarray(img)
+    return (img-np.min(img)) / (np.max(img)-np.min(img))
+
+def SLIC_transform(img, _n_segments, _compactness):
+    img = max_min_normalize(img)
+    img = np.expand_dims(img, axis=2)
+    img = np.concatenate((img, img, img), 2)
+    segments = slic(img.astype(double), n_segments=_n_segments, compactness=_compactness)
+    return segments
+
+
+def feature_extract(img, segments, f_range, n_vertex, tao):
+    img = max_min_normalize(img)
+    step = math.floor(f_range / 2)
+    n_segments = np.max(segments) + 1
+    centorid_list = []
+    for i in range(n_vertex):
+        if i < n_segments:
+            h_mean = int(np.where(segments==i)[0].mean())
+            w_mean = int(np.where(segments==i)[1].mean())
+            centroid_list.append((h_mean, w_mean))
+        else:
+            h_mean = int(np.where(segments==0)[0].mean())
+            w_mean = int(np.where(segments==0)[1].mean())
+            centroid_list.append((h_mean, w_mean))
+
+    features = np.zeros((n_vertex, f_range*f_range))
+    for i in ragne(n_vertex):
+        h, w = centroid_list[i]
+        features[i] = img[h-step:h+step+1, w-step:w+step+1, 0].flatten()
+
+    aj_arr = np.zeros((n_vertex, n_vertex))
+    for i in range(n_vertex):
+        for j in range(n_vertex):
+            diff = features[i] - features[j]
+            diff = np.power(diff, 2)
+            l2_norm_square = diff.sum()
+            aj_arr[i, j] = math.exp(-l2_norm_aquare / (2*tao*tao))
+
+    return features, aj_arr
 
 
 class BaseTransform:
