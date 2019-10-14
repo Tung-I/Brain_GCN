@@ -19,7 +19,7 @@ class BrainDataset(BaseDataset):
         transforms (list of Box): The preprocessing techniques applied to the data.
         augments (list of Box): The augmentation techniques applied to the training data (default: None).
     """
-    def __init__(self, data_split_csv, train_preprocessings, valid_preprocessings, transforms, augments=None, n_segments, compactness, feature_range, n_vertex, tao,  **kwargs):
+    def __init__(self, data_split_csv, train_preprocessings, valid_preprocessings, transforms, n_segments, compactness, feature_range, n_vertex, tao, augments=None, **kwargs):
         super().__init__(**kwargs)
         self.data_split_csv = data_split_csv
         self.train_preprocessings = compose(train_preprocessings)
@@ -37,13 +37,14 @@ class BrainDataset(BaseDataset):
 
         # Collect the data paths according to the dataset split csv.
         with open(self.data_split_csv, "r") as f:
-            type_ = 'Training' if self.type == 'train' else 'Validation'
+            type_ = 'train' if self.type == 'train' else 'valid'
             rows = csv.reader(f)
             for case_name, split_type in rows:
                 if split_type == type_:
                     image_paths = sorted(list((self.data_dir / case_name).glob('image*.nii.gz')))
                     label_paths = sorted(list((self.data_dir / case_name).glob('label*.nii.gz')))
                     self.data_paths.extend([(image_path, label_path) for image_path, label_path in zip(image_paths, label_paths)])
+
 
     def __len__(self):
         return len(self.data_paths)

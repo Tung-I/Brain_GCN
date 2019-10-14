@@ -1,0 +1,68 @@
+main:
+    random_seed: 'brain'
+    saved_dir: '/home/tony/Documents/Brain_GCN/models/first/train'
+
+dataset:
+    name: 'BrainDataset'
+    kwargs:
+        data_dir: '/home/tony/Documents/IBSR_preprocessed_2d'
+        data_split_csv: '/home/tony/Documents/Brain_GCN/dataset_split_2d.csv'
+        train_preprocessings:
+        valid_preprocessings:
+        augments:
+        transforms:
+            - name: 'ToTensor'
+        n_segments: 2000
+        compactness: 20
+        feature_range: 5
+        n_vertex: 2048
+        tao: 0.5
+
+dataloader:
+    name: 'Dataloader'
+    kwargs:
+        train_batch_size: 1
+        valid_batch_size: 1
+        shuffle: true
+        num_workers: 4
+
+net:
+    name: 'GCN'
+    kwargs:
+        n_feat: 25
+        n_hide: 512
+        n_class: 4
+        dropout_rate: 0.2
+        
+losses:
+    - name: 'DiceLoss'
+      weight: 1.0
+
+metrics:
+    - name: 'Dice'
+
+optimizer:
+    name: 'Adam'
+    kwargs:
+        lr: 0.001
+        weight_decay: 0
+        amsgrad: false
+
+logger:
+    name: 'KitsSegLogger'
+    kwargs:
+        dummy_input: [16, 1, 128, 128]
+
+monitor:
+    name: 'Monitor'
+    kwargs:
+        mode: 'min'
+        target: 'Loss'
+        saved_freq: 10
+        early_stop: 0
+
+trainer:
+    name: 'BrainTrainer'
+    kwargs:
+        device: 'cuda:0'
+        num_epochs: 100
