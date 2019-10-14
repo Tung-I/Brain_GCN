@@ -73,6 +73,19 @@ def feature_extract(img, segments, f_range, n_vertex, tao):
     return features, aj_arr
 
 
+def label_transform(label, segments, n_vertex):
+    f_label = np.zeros(n_vertex)
+    label_new = np.zeros((label.shape[0], label.shape[1]))
+    for i in range(segments.max() + 1):
+        where = np.where(segments==i)
+        h = int(where[0].mean())
+        w = int(where[1].mean())
+        label_new[np.where(segments==i)] = label[w, h]
+    return label_new
+
+        
+
+
 class BaseTransform:
     """The base class for all transforms.
     """

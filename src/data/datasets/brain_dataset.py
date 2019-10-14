@@ -8,6 +8,7 @@ from src.data.datasets.base_dataset import BaseDataset
 from src.data.transforms import compose
 from src.data.transforms import SLIC_transform
 from src.data.transforms import feature_extract
+from src.data.transforms import label_transform
 
 class BrainDataset(BaseDataset):
     """
@@ -50,7 +51,6 @@ class BrainDataset(BaseDataset):
     def __getitem__(self, index):
         image_path, label_path = self.data_paths[index]
         image, label = nib.load(str(image_path)).get_data().astype(np.float32), nib.load(str(label_path)).get_data().astype(np.int64)
-        image, label = image.transpose(1, 2, 0)[..., None], label.transpose(1, 2, 0)[..., None]
 
         if self.type == 'train':
             image, label = self.train_preprocessings(image, label)
@@ -60,6 +60,7 @@ class BrainDataset(BaseDataset):
 
         segments = SLIC_transform(image, self.n_segments, self.compactness)
         features, adj_arr = feature_extract(image, segments, self.feature_range, self.n_vertex, self.tao)
+        label = label_transform(label, segments, self.n_vertex)
 
         features, adj_arr, label ,segments = self.transforms(features, adj_arr, label, segments, dtypes=[torch.float, torch.float, torch.long, torch.long])
         features, adj_arr, label ,segments = features.contiguous(), adj_arr.contigugous(), label.contiguous(), segments.contiguous()
