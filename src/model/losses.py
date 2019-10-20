@@ -21,7 +21,7 @@ class DiceLoss(nn.Module):
 
         n_class = output.size(1)
 
-        output_img = torch.zeros_like(target)
+        output_img = torch.zeros_like(target).cuda()
         output = torch.argmax(output, 1)
 
         mask0 = torch.zeros_like(target)
@@ -32,14 +32,16 @@ class DiceLoss(nn.Module):
 
 
         # Get the one-hot encoding of the ground truth label. (C, N, N)
+        template = torch.zeros(n_class, target.size(0), target.size(1)).cuda()
         target = torch.unsqueeze(target, 0)
         output_img = torch.unsqueeze(output_img, 0)
-        target = torch.zeros(n_class, target.size(0), target.size(1)).scatter_(0, target, 1)
-        output_img = torch.zeros(n_class, target.size(0), target.size(1)).scatter_(0, output_img, 1)
+        target = torch.zeros_like(template).scatter_(0, target, 1)
+        output_img = torch.zeros_like(template).scatter_(0, output_img, 1)
 
         # Calculate the dice loss.
         reduced_dims = list(range(1, target.dim())) # (C, N, N) --> (C)
         intersection = 2.0 * (output_img * target).sum(reduced_dims)
         union = (output_img ** 2).sum(reduced_dims) + (target ** 2).sum(reduced_dims)
         score = intersection / (union + 1e-10)
+        #print(1 - score.mean())
         return 1 - score.mean()

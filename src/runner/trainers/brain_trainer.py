@@ -1,3 +1,4 @@
+import torch
 from src.runner.trainers.base_trainer import BaseTrainer
 
 
@@ -15,7 +16,14 @@ class BrainTrainer(BaseTrainer):
             input (torch.Tensor): The data input.
             target (torch.LongTensor): The data target.
         """
-        return batch['features'], batch['adj_arr'], batch['label'], batch['segments']
+        f = torch.squeeze(batch['features'], 0)
+        #a = torch.squeeze(batch['adj_arr'], 0)
+        l = torch.squeeze(batch['label'], 0)
+        s = torch.squeeze(batch['segments'], 0)
+        t = batch['tao']
+        #return batch['features'], batch['adj_arr'], batch['label'], batch['segments']
+        #return f, a, l, s
+        return f, l, s, t
 
     def _compute_losses(self, output, target, segments):
         """Compute the losses.
@@ -51,7 +59,7 @@ class BrainTrainer(BaseTrainer):
         for metric in self.metric_fns:
             if metric.__class__.__name__ == 'Dice':
                 log['Dice'] = 0
-                for i in range(self.net.out_channels):
+                for i in range(self.net.n_class):
                     log[f'Dice_{i}'] = 0
             else:
                 log[metric.__class__.__name__] = 0

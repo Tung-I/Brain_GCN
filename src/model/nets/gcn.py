@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+#import scipy.sparse as sp
 
 from src.model.nets.base_net import BaseNet
 from torch.nn.parameter import Parameter
@@ -11,15 +12,27 @@ from torch.nn.modules.module import Module
 class GCN(nn.Module):
     def __init__(self, n_feat, n_hide, n_class, dropout_rate):
         super(GCN, self).__init__()
+        
+        self.n_feat = n_feat
+        self.n_hide = n_hide
+        self.n_class = n_class
+        self.dropout_rate = dropout_rate
 
         self.gc1 = GraphConvolution(n_feat, n_hide)
         self.gc2 = GraphConvolution(n_hide, n_class)
         self.dropout_rate = dropout_rate
 
-    def forward(self, x, adj_arr):
-        x = F.relu(self.gc1(x, adj))
+    def forward(self, x, a):
+        #print(a.shape)
+        i = torch.eye(a.size(0)).cuda()
+        a_hat = a + i
+        d = torch.diag(a_hat.sum(1))
+        adj_arr = torch.mm(torch.inverse(d), a_hat)
+        #print(d.shape):
+        x = F.relu(self.gc1(x, adj_arr))
         x = F.dropout(x, self.dropout_rate)
-        x = self.gc2(x, adj)
+        x = self.gc2(x, adj_arr)
+        print(x)
         return F.log_softmax(x, dim=1)
 
 

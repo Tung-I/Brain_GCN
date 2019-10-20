@@ -4,6 +4,7 @@ from tqdm import tqdm
 import random
 import numpy as np
 
+from src.data.transforms import adj_generate
 
 class BaseTrainer:
     """The base class for all trainers.
@@ -61,6 +62,7 @@ class BaseTrainer:
             valid_log, valid_batch, valid_outputs = self._run_epoch('validation')
             logging.info(f'Valid log: {valid_log}.')
 
+
             # Adjust the learning rate.
             if self.lr_scheduler is None:
                 pass
@@ -117,9 +119,13 @@ class BaseTrainer:
 
         log = self._init_log()
         count = 0
+        
         for batch in trange:
             batch = self._allocate_data(batch)
-            inputs, adj_arr, targets, segments = self._get_inputs_targets(batch)
+            #inputs, adj_arr, targets, segments = self._get_inputs_targets(batch)
+            inputs, targets, segments, tao = self._get_inputs_targets(batch)
+            adj_arr = adj_generate(inputs, tao)
+            print(adj_arr.device)
             if mode == 'training':
                 outputs = self.net(inputs, adj_arr)
                 losses = self._compute_losses(outputs, targets, segments)

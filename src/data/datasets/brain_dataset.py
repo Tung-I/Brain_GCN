@@ -8,6 +8,7 @@ from src.data.datasets.base_dataset import BaseDataset
 from src.data.transforms import compose
 from src.data.transforms import SLIC_transform
 from src.data.transforms import feature_extract
+from src.data.transforms import max_min_normalize
 from src.data.transforms import label_transform
 
 class BrainDataset(BaseDataset):
@@ -53,6 +54,9 @@ class BrainDataset(BaseDataset):
         image_path, label_path = self.data_paths[index]
         image, label = nib.load(str(image_path)).get_data().astype(np.float32), nib.load(str(label_path)).get_data().astype(np.int64)
 
+        image = np.power(image, 2)
+        image = max_min_normalize(image)
+
         if self.type == 'train':
             image, label = self.train_preprocessings(image, label)
             #image, label = self.augments(image, label, elastic_deformation_orders=[3, 0])
@@ -60,9 +64,20 @@ class BrainDataset(BaseDataset):
             image, label = self.valid_preprocessings(image, label)
 
         segments = SLIC_transform(image, self.n_segments, self.compactness)
-        features, adj_arr = feature_extract(image, segments, self.feature_range, self.n_vertex, self.tao)
+        features = feature_extract(image, segments, self.feature_range, self.n_vertex)
         label = label_transform(label, segments, self.n_vertex)
 
-        features, adj_arr, label ,segments = self.transforms(features, adj_arr, label, segments, dtypes=[torch.float, torch.float, torch.long, torch.long])
-        features, adj_arr, label ,segments = features.contiguous(), adj_arr.contigugous(), label.contiguous(), segments.contiguous()
-        return {"features": features, "adj_arr": adj_arr, "label": label, "segments": segments}
+
+        features, label ,segments = self.transforms(features, label, segments, dtypes=[torch.float, torch.long, torch.long]) 
+        #print(features.shape)
+        #print(segments.device)
+        #adj_arr = adj_generate(features, self.tao)
+        #print(adj_arr.device)
+        #adj_arr = self.transforms(adj_arr, dtypes=[torch.float])
+        
+        #features, adj_arr, label ,segments = features.contiguous(), adj_arr.contiguous(), label.contiguous(), segments.contiguous()
+        features, label ,segments = features.contiguous(), label.contiguous(), segments.contiguous()
+        #return {"features": features, "adj_arr": adj_arr, "label": label, "segments": segments}
+        return {"features": features, "label": label, "segments": segments, "tao": self.tao}
+
+

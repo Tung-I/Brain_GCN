@@ -12,10 +12,10 @@ dataset:
         augments:
         transforms:
             - name: 'ToTensor'
-        n_segments: 2000
-        compactness: 20
-        feature_range: 5
-        n_vertex: 2048
+        n_segments: 1000
+        compactness: 10
+        feature_range: 7
+        n_vertex: 1024
         tao: 0.5
 
 dataloader:
@@ -29,7 +29,7 @@ dataloader:
 net:
     name: 'GCN'
     kwargs:
-        n_feat: 25
+        n_feat: 49
         n_hide: 512
         n_class: 4
         dropout_rate: 0.2

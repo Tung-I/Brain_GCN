@@ -23,7 +23,7 @@ class Dice(nn.Module):
 
         n_class = output.size(1)
 
-        output_img = torch.zeros_like(target)
+        output_img = torch.zeros_like(target).cuda()
         output = torch.argmax(output, 1)
 
         mask0 = torch.zeros_like(target)

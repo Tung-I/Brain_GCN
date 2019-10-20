@@ -1,4 +1,5 @@
 import torch
+import math
 import random
 import functools
 import numpy as np
@@ -7,6 +8,7 @@ from skimage.transform import resize
 from skimage.morphology import label
 from skimage.segmentation import slic
 import src.data.transforms
+from tqdm import tqdm
 
 
 def compose(transforms=None):
@@ -35,52 +37,63 @@ def max_min_normalize(img):
     return (img-np.min(img)) / (np.max(img)-np.min(img))
 
 def SLIC_transform(img, _n_segments, _compactness):
-    img = max_min_normalize(img)
+    #img = max_min_normalize(img)
     img = np.expand_dims(img, axis=2)
     img = np.concatenate((img, img, img), 2)
-    segments = slic(img.astype(double), n_segments=_n_segments, compactness=_compactness)
+    segments = slic(img.astype('double'), n_segments=_n_segments, compactness=_compactness)
     return segments
 
 
-def feature_extract(img, segments, f_range, n_vertex, tao):
-    img = max_min_normalize(img)
+def feature_extract(img, segments, f_range, n_vertex):
+    #img = max_min_normalize(img)
     step = math.floor(f_range / 2)
     n_segments = np.max(segments) + 1
-    centorid_list = []
+    features = np.zeros((n_vertex, f_range*f_range))
+    #centroid_list = []
     for i in range(n_vertex):
         if i < n_segments:
             h_mean = int(np.where(segments==i)[0].mean())
             w_mean = int(np.where(segments==i)[1].mean())
-            centroid_list.append((h_mean, w_mean))
+            #centroid_list.append((h_mean, w_mean))
         else:
             h_mean = int(np.where(segments==0)[0].mean())
             w_mean = int(np.where(segments==0)[1].mean())
-            centroid_list.append((h_mean, w_mean))
+            #centroid_list.append((h_mean, w_mean))
+        h = h_mean
+        w = w_mean
+        features[i] = img[h-step:h+step+1, w-step:w+step+1].flatten()
+    return features
 
-    features = np.zeros((n_vertex, f_range*f_range))
-    for i in ragne(n_vertex):
-        h, w = centroid_list[i]
-        features[i] = img[h-step:h+step+1, w-step:w+step+1, 0].flatten()
+def adj_generate(features, tao):
+    adj_arr = torch.zeros(features.size(0), features.size(0)).cuda()
+    for i in tqdm(range(adj_arr.size(0))):
+        for j in range(i+1, adj_arr.size(0)):
+            e_dist = torch.PairwiseDistance(features[i].unsqueeze(0), features[j].unsqueeze(0))
+            adj_arr[i, j] = -1 * torch.pow(e_dist, 2) / (2*tao*tao)
+            adj_arr[j, i] = adj_arr[i, j]
+            #print(adj_arr.device)
+    adj_arr = torch.exp(adj_arr)
+    adj_arr += torch.eye(features.size(0)).cuda()
 
-    aj_arr = np.zeros((n_vertex, n_vertex))
-    for i in range(n_vertex):
-        for j in range(n_vertex):
-            diff = features[i] - features[j]
-            diff = np.power(diff, 2)
-            l2_norm_square = diff.sum()
-            aj_arr[i, j] = math.exp(-l2_norm_aquare / (2*tao*tao))
+    # adj_arr = torch.zeros(features.size(0), features.size(0)).cuda()
+    # for i in tqdm(range(adj_arr.size(0))):
+    #     for j in range(i+1, adj_arr.size(0)):
+    #         diff = features[i] - features[j]
+    #         diff = torch.pow(diff, 2)
+    #         l2_norm_square = diff.sum()
+    #         adj_arr[i, j] = -1 * l2_norm_square / (2*tao*tao)
+    #         adj_arr[j, i] = adj_arr[i, j]
+    #         #print(adj_arr.device)
+    # adj_arr = torch.exp(adj_arr)
+    # adj_arr += torch.eye(features.size(0)).cuda()
 
-    return features, aj_arr
+    return adj_arr
 
 
 def label_transform(label, segments, n_vertex):
-    f_label = np.zeros(n_vertex)
     label_new = np.zeros((label.shape[0], label.shape[1]))
     for i in range(segments.max() + 1):
-        where = np.where(segments==i)
-        h = int(where[0].mean())
-        w = int(where[1].mean())
-        label_new[np.where(segments==i)] = label[w, h]
+        label_new[np.where(segments==i)] = int(np.median(label[np.where(segments==i)]))
     return label_new
 
         
@@ -109,6 +122,8 @@ class Compose(BaseTransform):
         Args:
             imgs (tuple of numpy.ndarray): The images to be transformed.
 
+        Returns:
+        Returns:
         Returns:
             imgs (tuple of torch.Tensor): The transformed images.
         """
@@ -622,5 +637,3 @@ class RandomCropPatch(BaseTransform):
         elif img.ndim == 4:
             h, w, d = img.shape[:-1]
             ht, wt, dt = size
-            h0, w0, d0 = random.randint(0, h - ht), random.randint(0, w - wt), random.randint(0, d - dt)
-            return h0, h0 + ht, w0, w0 + wt, d0, d0 + dt
