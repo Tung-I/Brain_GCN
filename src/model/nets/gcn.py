@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+import numpy as np
 #import scipy.sparse as sp
 
 from src.model.nets.base_net import BaseNet
@@ -9,10 +10,10 @@ from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
 
 
-class GCN(nn.Module):
+class GCN(BaseNet):
     def __init__(self, n_feat, n_hide, n_class, dropout_rate):
-        super(GCN, self).__init__()
-        
+        super().__init__()
+
         self.n_feat = n_feat
         self.n_hide = n_hide
         self.n_class = n_class
@@ -28,15 +29,20 @@ class GCN(nn.Module):
         a_hat = a + i
         d = torch.diag(a_hat.sum(1))
         adj_arr = torch.mm(torch.inverse(d), a_hat)
+        ###
+        #to_save = adj_arr.clone().detach()
+        #to_save = np.asarray(to_save.cpu())
+        #np.save('/home/tony/Documents/adj_arr.npy', to_save)
+        ###
         #print(d.shape):
         x = F.relu(self.gc1(x, adj_arr))
         x = F.dropout(x, self.dropout_rate)
         x = self.gc2(x, adj_arr)
-        print(x)
-        return F.log_softmax(x, dim=1)
+        x = F.softmax(x, dim=1)
+        return x
 
 
-class GraphConvolution(Module):
+class GraphConvolution(nn.Sequential):
 
     def __init__(self, in_features, out_features, bias=True):
         super(GraphConvolution, self).__init__()

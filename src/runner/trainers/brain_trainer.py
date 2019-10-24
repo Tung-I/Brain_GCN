@@ -19,13 +19,14 @@ class BrainTrainer(BaseTrainer):
         f = torch.squeeze(batch['features'], 0)
         #a = torch.squeeze(batch['adj_arr'], 0)
         l = torch.squeeze(batch['label'], 0)
+        g = torch.squeeze(batch['gcnlabel'], 0)
         s = torch.squeeze(batch['segments'], 0)
-        t = batch['tao']
+        a = torch.squeeze(batch['adj_arr'], 0)
         #return batch['features'], batch['adj_arr'], batch['label'], batch['segments']
         #return f, a, l, s
-        return f, l, s, t
+        return l, g, s, f, a
 
-    def _compute_losses(self, output, target, segments):
+    def _compute_losses(self, output, target):
         """Compute the losses.
         Args:
             output (torch.Tensor): The model output.
@@ -33,7 +34,7 @@ class BrainTrainer(BaseTrainer):
         Returns:
             losses (list of torch.Tensor): The computed losses.
         """
-        losses = [loss(output, target, segments) for loss in self.loss_fns]
+        losses = [loss(output, target) for loss in self.loss_fns]
         return losses
 
     def _compute_metrics(self, output, target, segments):

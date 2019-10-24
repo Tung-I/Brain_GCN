@@ -1,6 +1,6 @@
 main:
     random_seed: 'brain'
-    saved_dir: '/home/tony/Documents/Brain_GCN/models/first/train'
+    saved_dir: '/home/tony/Documents/Brain_GCN/models/deep/train'
 
 dataset:
     name: 'BrainDataset'
@@ -12,11 +12,6 @@ dataset:
         augments:
         transforms:
             - name: 'ToTensor'
-        n_segments: 1000
-        compactness: 10
-        feature_range: 7
-        n_vertex: 1024
-        tao: 0.5
 
 dataloader:
     name: 'Dataloader'
@@ -27,15 +22,17 @@ dataloader:
         num_workers: 4
 
 net:
-    name: 'GCN'
+    name: 'DeepGCN'
     kwargs:
-        n_feat: 49
-        n_hide: 512
+        n_feat: 64
+        n_hide: 1024
         n_class: 4
-        dropout_rate: 0.2
+        dropout_rate: 0.1
         
 losses:
-    - name: 'DiceLoss'
+    - name: 'MyBCELoss'
+      kwargs:
+          weight: [0.2, 5.0, 1.0, 1.0]
       weight: 1.0
 
 metrics:

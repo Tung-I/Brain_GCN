@@ -8,13 +8,8 @@ dataloader:
 dataset:
   kwargs:
     augments: null
-    compactness: 10
     data_dir: /home/tony/Documents/IBSR_preprocessed_2d
     data_split_csv: /home/tony/Documents/Brain_GCN/dataset_split_2d.csv
-    feature_range: 7
-    n_segments: 1000
-    n_vertex: 1024
-    tao: 0.5
     train_preprocessings: null
     transforms:
     - name: ToTensor
@@ -29,7 +24,7 @@ logger:
     - 128
   name: KitsSegLogger
 losses:
-- name: DiceLoss
+- name: MyBCELoss
   weight: 1.0
 main:
   random_seed: brain
@@ -45,10 +40,10 @@ monitor:
   name: Monitor
 net:
   kwargs:
-    dropout_rate: 0.2
+    dropout_rate: 0.1
     n_class: 4
-    n_feat: 49
-    n_hide: 512
+    n_feat: 64
+    n_hide: 1024
   name: GCN
 optimizer:
   kwargs:

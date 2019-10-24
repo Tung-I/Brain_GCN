@@ -4,3 +4,4 @@ from .highres3d_net import HighRes3DNet
 from .deeplabv3plus import DeepLabV3Plus
 from .vnet import VNet
 from .gcn import GCN
+from .deep_gcn import DeepGCN

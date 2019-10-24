@@ -21,26 +21,32 @@ class KitsSegLogger(BaseLogger):
             valid_batch (dict): The validation batch.
             valid_output (torch.Tensor): The validation output.
         """
-        train_positive_list = np.unique(np.where(train_batch['label'].cpu().numpy() != 0)[2])
-        if len(train_positive_list) == 0:
-            train_slice_id = random.randint(0, train_output.size(2)-1)
-        else:
-            train_slice_id = random.choice(train_positive_list)
+        #train_positive_list = np.unique(np.where(train_batch['label'].cpu().numpy() != 0)[2])
+        #if len(train_positive_list) == 0:
+            #train_slice_id = random.randint(0, train_output.size(2)-1)
+        #else:
+            #train_slice_id = random.choice(train_positive_list)
 
-        valid_positive_list = np.unique(np.where(valid_batch['label'].cpu().numpy() != 0)[2])
-        if len(valid_positive_list) == 0:
-            valid_slice_id = random.randint(0, valid_output.size(2)-1)
-        else:
-            valid_slice_id = random.choice(valid_positive_list)
+        #valid_positive_list = np.unique(np.where(valid_batch['label'].cpu().numpy() != 0)[2])
+        #if len(valid_positive_list) == 0:
+            #valid_slice_id = random.randint(0, valid_output.size(2)-1)
+        #else:
+            #valid_slice_id = random.choice(valid_positive_list)
 
-        num_classes = train_output.size(1)
-        train_img = make_grid(train_batch['image'][:, :, train_slice_id], nrow=1, normalize=True, scale_each=True, pad_value=1)
-        train_label = make_grid(train_batch['label'][:, :, train_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
-        train_pred = make_grid(train_output.argmax(dim=1, keepdim=True)[:, :, train_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
+        num_classes = train_batch['label'].max()
+        #train_img = make_grid(train_batch['image'][:, :, train_slice_id], nrow=1, normalize=True, scale_each=True, pad_value=1)
+        #train_label = make_grid(train_batch['label'][:, :, train_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
+        #train_pred = make_grid(train_output.argmax(dim=1, keepdim=True)[:, :, train_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
+        train_img = make_grid(train_batch['image'], nrow=1, normalize=True, scale_each=True, pad_value=1)
+        train_label = make_grid(train_batch['label'].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes), pad_value=1)
+        train_pred = make_grid(train_output.float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes), pad_value=1)
 
-        valid_img = make_grid(valid_batch['image'][:, :, valid_slice_id], nrow=1, normalize=True, scale_each=True, pad_value=1)
-        valid_label = make_grid(valid_batch['label'][:, :, valid_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
-        valid_pred = make_grid(valid_output.argmax(dim=1, keepdim=True)[:, :, valid_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
+        #valid_img = make_grid(valid_batch['image'][:, :, valid_slice_id], nrow=1, normalize=True, scale_each=True, pad_value=1)
+        #valid_label = make_grid(valid_batch['label'][:, :, valid_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
+        #valid_pred = make_grid(valid_output.argmax(dim=1, keepdim=True)[:, :, valid_slice_id].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes-1), pad_value=1)
+        valid_img = make_grid(valid_batch['image'], nrow=1, normalize=True, scale_each=True, pad_value=1)
+        valid_label = make_grid(valid_batch['label'].float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes), pad_value=1)
+        valid_pred = make_grid(valid_output.float(), nrow=1, normalize=True, scale_each=True, range=(0, num_classes), pad_value=1)
 
         train_grid = torch.cat((train_img, train_label, train_pred), dim=-1)
         valid_grid = torch.cat((valid_img, valid_label, valid_pred), dim=-1)

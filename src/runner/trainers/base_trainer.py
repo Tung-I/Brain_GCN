@@ -4,7 +4,7 @@ from tqdm import tqdm
 import random
 import numpy as np
 
-from src.data.transforms import adj_generate
+from src.data.transforms import label2img
 
 class BaseTrainer:
     """The base class for all trainers.
@@ -122,23 +122,20 @@ class BaseTrainer:
         
         for batch in trange:
             batch = self._allocate_data(batch)
-            #inputs, adj_arr, targets, segments = self._get_inputs_targets(batch)
-            inputs, targets, segments, tao = self._get_inputs_targets(batch)
-            adj_arr = adj_generate(inputs, tao)
-            print(adj_arr.device)
+            labels, gcnlabels, segments, features, adj_arr = self._get_inputs_targets(batch)
             if mode == 'training':
-                outputs = self.net(inputs, adj_arr)
-                losses = self._compute_losses(outputs, targets, segments)
+                outputs = self.net(features, adj_arr)
+                losses = self._compute_losses(outputs, gcnlabels)
                 loss = (torch.stack(losses) * self.loss_weights).sum()
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
             else:
                 with torch.no_grad():
-                    outputs = self.net(inputs)
-                    losses = self._compute_losses(outputs, targets)
+                    outputs = self.net(features, adj_arr)
+                    losses = self._compute_losses(outputs, gcnlabels)
                     loss = (torch.stack(losses) * self.loss_weights).sum()
-            metrics =  self._compute_metrics(outputs, targets, segments)
+            metrics =  self._compute_metrics(outputs, gcnlabels, segments)
 
             batch_size = self.train_dataloader.batch_size if mode == 'training' else self.valid_dataloader.batch_size
             self._update_log(log, batch_size, loss, losses, metrics)
@@ -147,6 +144,8 @@ class BaseTrainer:
 
         for key in log:
             log[key] /= count
+
+        outputs = label2img(outputs, segments)
         return log, batch, outputs
 
     def _allocate_data(self, batch):
